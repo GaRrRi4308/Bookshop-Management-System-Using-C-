@@ -6,7 +6,7 @@
 #include <mysql.h>
 
 #define PASSWORD 4308
-#define HOST "127.0.0.1"
+#define HOST "sql11.freemysqlhosting.net"
 #define USER "root"
 #define PASS "4308"
 #define DATABASE "Management"
@@ -126,7 +126,7 @@ int main() {
     conn = mysql_init(nullptr);
     conn = mysql_real_connect(conn, HOST, USER, PASS, DATABASE, PORT, nullptr, 0);
     int choice;
-    if (conn) {
+    if (1) {
         while (true) {
             system("cls");
             main_menu();
