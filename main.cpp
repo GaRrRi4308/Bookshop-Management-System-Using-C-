@@ -4,12 +4,13 @@
 #include <iostream>
 #include <conio.h>
 #include <mysql.h>
+#include <sstream>
 
 #define PASSWORD 4308
 #define HOST "sql11.freemysqlhosting.net"
-#define USER "root"
-#define PASS "4308"
-#define DATABASE "Management"
+#define USER "sql11664456"
+#define PASS "vpaTmIRPm1"
+#define DATABASE "sql11664456"
 #define PORT 3306
 
 using namespace std;
@@ -28,20 +29,70 @@ class books {
     int qty;
 public:
     void add();
-
-    void update_prise();
-
-    void search();
-
-    void update();
-
-    void display();
 };
 
 // MEMBER FUNCTIONS
 
 //class books
+void books::add() {
+    cout << "Enter the name of the book: ";
+    cin >> name;
+    cout << "Enter the name of the author: ";
+    cin >> auth;
+    cout << "Enter the Price: ";
+    cin >> price;
+    cout << "Enter the Qty Received: ";
+    cin >> qty;
 
+    // Використання підготовленого запиту для безпечного додавання даних
+    MYSQL_STMT *stmt;
+    stmt = mysql_stmt_init(conn);
+    if (!stmt) {
+        cout << "Could not initialize statement handler\n";
+        return;
+    }
+
+    const char *query = "INSERT INTO Books (name, auth, price, qty) VALUES (?, ?, ?, ?)";
+    if (mysql_stmt_prepare(stmt, query, strlen(query))) {
+        cout << "Could not prepare statement\n" << mysql_stmt_error(stmt) << "\n";;
+        return;
+    }
+
+    MYSQL_BIND bind[4];
+    memset(bind, 0, sizeof(bind));
+
+    // Прив'язка параметрів
+    bind[0].buffer_type = MYSQL_TYPE_STRING;
+    bind[0].buffer = (char *) name.c_str();
+    bind[0].buffer_length = name.length();
+
+    bind[1].buffer_type = MYSQL_TYPE_STRING;
+    bind[1].buffer = (char *) auth.c_str();
+    bind[1].buffer_length = auth.length();
+
+    bind[2].buffer_type = MYSQL_TYPE_LONG;
+    bind[2].buffer = (char *) &price;
+    bind[2].buffer_length = sizeof(price);
+
+    bind[3].buffer_type = MYSQL_TYPE_LONG;
+    bind[3].buffer = (char *) &qty;
+    bind[3].buffer_length = sizeof(qty);
+
+    if (mysql_stmt_bind_param(stmt, bind)) {
+        cout << "Could not bind parameters\n";
+        return;
+    }
+
+    // Виконання запиту
+    if (mysql_stmt_execute(stmt)) {
+        cout << "Could not execute prepared statement\n" << mysql_stmt_error(stmt) << "\n";;
+        return;
+    }
+
+    cout << "Book record inserted successfully\n";
+
+    mysql_stmt_close(stmt);
+};
 //class suppliers
 
 //class purchased
@@ -86,6 +137,22 @@ void main_menu() {
 void book_menu() {
     int c;
     books b;
+
+    cout << "*************************************************" << endl;
+    cout << "                  BOOK MENU" << endl;
+    cout << "*************************************************" << endl;
+    cout << "   1. ADD" << endl;
+    cout << "   2. UPDATE PRICE" << endl;
+    cout << "   3. SEARCH" << endl;
+    cout << "   4. UPDATE STATUS" << endl;
+    cout << "   5. DISPLAY ALL" << endl;
+    cout << "   6. RETURN TO MAIN MENU" << endl << endl << endl;
+    cout << "Enter Your Choice : ";
+    cin >> c;
+    switch (c) {
+        case 1:
+            b.add();
+    }
 }
 
 //sup menu
