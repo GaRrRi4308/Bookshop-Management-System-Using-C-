@@ -213,15 +213,19 @@ void books::search()
 {
     cout << "Enter book id for details : ";
     cin >> id;
-
     stmt.str("");
-    stmt << "Select * from books where id = " << id << ";";
+    stmt << "Select * from Books where id = " << id << ";";
     query = stmt.str();
     q = query.c_str();
-    mysql_query(conn, q);
-    res_set = mysql_store_result(conn);
 
-    if (row == mysql_fetch_row(res_set) != NULL)
+    if (mysql_query(conn, q))
+    {
+        cout << "Query Error!" << endl;
+        return;
+    }
+
+    MYSQL_RES* res_set = mysql_store_result(conn);
+    if (MYSQL_ROW row; (row = mysql_fetch_row(res_set)) != nullptr)
     {
         cout << "The Details of Book Id " << row[0] << endl;
         cout << "The Name of the book is : " << row[1] << endl;
