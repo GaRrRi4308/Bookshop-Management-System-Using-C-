@@ -1,6 +1,5 @@
 // HEADER FILES
 
-// ReSharper disable CppDoxygenUnresolvedReference
 #include <iostream>
 #include <conio.h>
 #include <mysql.h>
@@ -36,6 +35,7 @@ public:
     void add();
     void update_price();
     void search();
+    static void update();
 };
 
 // MEMBER FUNCTIONS
@@ -43,7 +43,6 @@ public:
 
 //class books
 
-// ReSharper disable once CppDoxygenUnresolvedReference
 /**
  * @brief Add a new book record to the database.
  *
@@ -239,6 +238,63 @@ void books::search()
     }
 }
 
+void books::update()
+{
+    int b_id[100], qty[100], i = 0;
+    stmt.str("");
+    stmt << "Select book_id,qty from Purchases where received = 'T' and inv IS NULL;";
+    query = stmt.str();
+    q = query.c_str();
+
+    if (mysql_query(conn, q))
+    {
+        cout << "Failed to execute query: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    res_set = mysql_store_result(conn);
+    if (res_set == nullptr)
+    {
+        cout << "Failed to store result: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    stmt.str("");
+    stmt << "Update Purchases set inv = 1 where received = 'T' and inv IS NULL;";
+    query = stmt.str();
+    q = query.c_str();
+
+    if (mysql_query(conn, q))
+    {
+        cout << "Failed to execute query: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    while ((row = mysql_fetch_row(res_set)) != nullptr)
+    {
+        b_id[i] = atoi(row[0]);
+        qty[i] = atoi(row[1]);
+        i++;
+    }
+
+    const int max = i;
+    for (i = 0; i <= max; i++)
+    {
+        stmt.str("");
+        stmt << "update Books set qty = " << qty[i] << " where id = " << b_id[i] << ";";
+        query = stmt.str();
+        q = query.c_str();
+
+        if (mysql_query(conn, q))
+        {
+            cout << "Failed to execute query: " << mysql_error(conn) << endl;
+            return;
+        }
+    }
+
+    cout << "The orders recieved have been updated.";
+}
+
 //class suppliers
 
 //class purchased
@@ -300,7 +356,6 @@ void book_menu()
     cout << "   2. UPDATE PRICE" << endl;
     cout << "   3. SEARCH" << endl;
     cout << "   4. UPDATE STATUS" << endl;
-    // TODO: Add functionality for updating status
     cout << "   5. DISPLAY ALL" << endl;
     // TODO: Add functionality for displaying all books
     cout << "   6. RETURN TO MAIN MENU" << endl << endl << endl;
@@ -318,10 +373,10 @@ void book_menu()
     case 3:
         b.search();
         break;
-    case 4: // NOLINT(*-branch-clone)
-        // TODO: Call b.update() method for case 4
+    case 4:
+        books::update();
         break;
-    case 5:
+    case 5: // NOLINT(*-branch-clone)
         // TODO: Call b.display() method for case 5
         break;
     case 6:
