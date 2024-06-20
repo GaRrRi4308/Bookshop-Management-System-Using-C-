@@ -36,6 +36,7 @@ public:
     void update_price();
     void search();
     static void update();
+    static void display();
 };
 
 // MEMBER FUNCTIONS
@@ -238,6 +239,36 @@ void books::search()
     }
 }
 
+/**
+ * @brief Update the quantity of books in the database.
+ *
+ * This function updates the quantity of books in the "Books" table in the database based on
+ * the records in the "Purchases" table where the books have been received but not yet invoiced.
+ * It retrieves the book IDs and quantities from the "Purchases" table and uses them to update
+ * the corresponding book records in the "Books" table.
+ *
+ * @details This function first retrieves the book IDs and quantities from the "Purchases" table
+ * where the books have been received but not yet invoiced. It executes a SELECT query to fetch the
+ * book_id and qty columns from the "Purchases" table using mysql_query() and mysql_store_result()
+ * functions. If the query execution or result storing fails, an error message is printed and the
+ * function returns.
+ *
+ * Then, it executes an UPDATE query to set the inv column of the "Purchases" table to 1 for the
+ * received but not yet invoiced books. Again, mysql_query() is used to execute the query, and if
+ * it fails, an error message is printed and the function returns.
+ *
+ * Next, it fetches the book_id and qty values from each row of the result set using mysql_fetch_row()
+ * function. The book_id and qty values are converted to integer using atoi() function and stored
+ * in the b_id[] and qty[] arrays respectively. The arrays are used to update the quantity of
+ * corresponding book records in the "Books" table.
+ *
+ * Finally, an UPDATE query is executed for each book ID and quantity in the b_id[] and qty[] arrays
+ * using mysql_query() function. If any of the queries fail, an error message is printed and the
+ * function returns. Otherwise, a success message is printed.
+ *
+ * @param None
+ * @return None
+ */
 void books::update()
 {
     int b_id[100], qty[100], i = 0;
@@ -295,6 +326,23 @@ void books::update()
     cout << "The orders recieved have been updated.";
 }
 
+void books::display()
+{
+    int i = 0;
+    query = "Select * from Books;";
+    q = query.c_str();
+    mysql_query(conn, q);
+    res_set = mysql_store_result(conn);
+
+    while ((row = mysql_fetch_row(res_set)) != nullptr)
+    {
+        cout << endl;
+        cout << "Name for book " << ++i << " : " << row[1] << endl;
+        cout << "Name of Author : " << row[2] << endl;
+        cout << "Price : " << row[3] << endl;
+        cout << "Quantity : " << row[4] << endl;
+    }
+}
 //class suppliers
 
 //class purchased
@@ -376,10 +424,10 @@ void book_menu()
     case 4:
         books::update();
         break;
-    case 5: // NOLINT(*-branch-clone)
-        // TODO: Call b.display() method for case 5
+    case 5:
+        books::display();
         break;
-    case 6:
+    case 6: // NOLINT(*-branch-clone)
         // TODO: Add functionality to return to main menu for case 6
         break;
     default:
