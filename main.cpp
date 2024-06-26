@@ -392,6 +392,27 @@ void main_menu()
 //book menu
 
 
+/**
+ * @brief Displays the book menu and performs various actions based on user input.
+ *
+ * This function displays a menu with different options for managing books. It prompts
+ * the user to enter their choice and performs the corresponding action. The available
+ * options are:
+ *
+ *   1. ADD: Invokes the "add" method of the books class to add a new book record to the database.
+ *   2. UPDATE PRICE: Invokes the "update_price" method of the books class to update the price of a book.
+ *   3. SEARCH: Invokes the "search" method of the books class to search for a book based on user input.
+ *   4. UPDATE STATUS: Invokes the "update" static method of the books class to update the status of books.
+ *   5. DISPLAY ALL: Invokes the "display" static method of the books class to display all book records.
+ *   6. RETURN TO MAIN MENU: Returns to the main menu.
+ *
+ * @details This function first displays the book menu options using cout. It then prompts the user to enter
+ * their choice using cin. Based on the user's choice, it invokes the corresponding method of the books class.
+ * If an invalid choice is entered, an error message is displayed.
+ *
+ * @param None
+ * @return None
+ */
 void book_menu()
 {
     int c;
@@ -405,9 +426,7 @@ void book_menu()
     cout << "   3. SEARCH" << endl;
     cout << "   4. UPDATE STATUS" << endl;
     cout << "   5. DISPLAY ALL" << endl;
-    // TODO: Add functionality for displaying all books
     cout << "   6. RETURN TO MAIN MENU" << endl << endl << endl;
-    // TODO: Implement function to return to main menu
     cout << "Enter Your Choice : ";
     cin >> c;
     switch (c)
@@ -427,11 +446,10 @@ void book_menu()
     case 5:
         books::display();
         break;
-    case 6: // NOLINT(*-branch-clone)
-        // TODO: Add functionality to return to main menu for case 6
-        break;
+    case 6:
+        return;
     default:
-        // TODO: Add error message for wrong input
+        cout << "Wrong Input" << endl << "Invalid Input";
         break;
     }
 }
