@@ -1,35 +1,39 @@
-// HEADER FILES
+/**
+ * @file main.cpp
+ * @brief Код C++ для управління книжковим магазином
+ * @details Містить класи для роботи з різними елементами. Реалізовано меню для взаємодії, включає підключення до бази даних MySQL
+ * @author Роман Курилюк
+ * @version 2.0.0
+ * @date 21.08.2024
+ */
+#include <iostream> // вивід даних з консолі
+#include <conio.h> // фукції для роботи з консоллю
+#include <mysql.h> // робота з MySQL
+#include <sstream> // потоки рядків
 
-#include <iostream>
-#include <conio.h>
-#include <mysql.h>
-#include <sstream>
+#include "config.h" // вхід в БД
 
-#include "config.h"
+using namespace std; // скорочення для потоків
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
+MYSQL* conn; // для взаємодії з БД
+stringstream stmt; // для формування запитів
+string query; // для формування запитів
+const char* q; // для зберігання запиту в С-стилі
+MYSQL_RES* res_set; // зберігання запиту
+MYSQL_ROW row; // робота з окремими рядками результату запиту
 
-using namespace std;
-
-// GLOBAL VARIABLES
-
-MYSQL* conn;
-stringstream stmt;
-string query;
-const char* q;
-MYSQL_RES* res_set;
-MYSQL_ROW row;
-
-// CLASSES MADE
-
+/**
+ * @class books
+ * @brief Клас для упавління книгами в базі даних
+ * @details Цей клас містить методи для додавання, оновлення цін, пошуку, оновлення і відображення книжок
+ */
 class books
 {
-    int id{};
-    string name;
-    string auth;
-    int price{};
-    int qty{};
+    int id_ = 0; ///< Іденитифікатор книги
+    string name_; ///< Назва книги
+    string auth_; ///< Автор книги
+    int price_ = 0; ///< Ціна книги
+    int qty_ = 0; ///< Кількість книг
 
 public:
     void add();
@@ -39,136 +43,146 @@ public:
     static void display();
 };
 
-// MEMBER FUNCTIONS
+/**
+ * @class suppliers
+ * @brief Клас для упавління постачальниками в базі даних
+ * @details Цей клас містить деталі про постачальників в системі
+ * @warning Не завершено
+ */
+class suppliers
+{
+    int id_ = 0; ///< Ідентифікатор постачальника
+    string name_; ///< Ім'я постачальника
+    long int phn_ = 0; ///< Номер телефону постачальника
+    string addr_line1_; ///< Перша лінія адреси постачальника
+    string addr_line2_; ///< Друга лінія адреси постачальника
+    string addr_city_; ///< Місто постачальника
+    string addr_state_; ///< Область постачальника
 
-
-//class books
+public:
+    void add_sup();
+};
 
 /**
- * @brief Add a new book record to the database.
- *
- * This function prompts the user to enter the name, author, price, and quantity of a book,
- * and inserts the corresponding values into the "Books" table in the database.
- *
- * @details This function first prompts the user to enter the name of the book, author's name,
- * price, and quantity received using cin and getline to capture strings that may contain spaces.
- * It then initializes a statement handler using mysql_stmt_init() and prepares a query to insert
- * values into the "Books" table using mysql_stmt_prepare(). The values to be inserted are bound to
- * the statement using MYSQL_BIND structures. The name and author are bound as strings, while the
- * price and quantity are bound as integers. The statement is executed using mysql_stmt_execute(),
- * and if successful, a confirmation message is printed. Finally, the statement handler is closed
- * using mysql_stmt_close().
- *
- * @param None
+ * @brief Додає новий запис про книгу в базу даних
+ * @details Функція запитує в користувача назву книги, ім'я автра, ціну та кількість книг, отримує цю інформацію та зберігає у базу даних. Під час виконання цієї операції використовується MySQL. Функція також виводить повідомлення про вдале або невдале виконання дії
  * @return None
  */
 void books::add()
 {
-    cout << "Enter the name of the book: ";
-    cin.ignore();
-    getline(cin, name);
-    cout << "Enter the name of the author: ";
-    getline(cin, auth);
-    cout << "Enter the Price: ";
-    cin >> price;
-    cout << "Enter the Qty Received: ";
-    cin >> qty;
+    // Зчитує дані про книгу з консолі
+    cout << "Enter the name of the book :";
+    cin >> name_;
+    cout << "Enter the name of the author :";
+    cin >> auth_;
+    cout << "Enter the Price :";
+    cin >> price_;
+    cout << "Enter the Qty Recived :";
+    cin >> qty_;
 
-    MYSQL_STMT* mysqlStmt = mysql_stmt_init(conn);
-    if (!mysqlStmt)
+    MYSQL_STMT* mysql_stmt = mysql_stmt_init(conn); //ініціалізація оператора MySQL
+
+    // Перевірка на дійсність
+    if (!mysql_stmt)
     {
         cout << "Could not initialize statement handler\n";
         return;
     }
 
+    // Перевірка на готовнісь запиту до виконання
     if (const auto str = "INSERT INTO Books (name, auth, price, qty) VALUES (?, ?, ?, ?)"; mysql_stmt_prepare(
-        mysqlStmt, str, strlen(str)))
+        mysql_stmt, str, strlen(str)))
     {
-        cout << "Could not prepare statement\n" << mysql_stmt_error(mysqlStmt) << "\n";
+        cout << "Could not prepare statement\n" << mysql_stmt_error(mysql_stmt) << "\n";
         return;
     }
 
-    MYSQL_BIND bind[4] = {};
+    MYSQL_BIND bind[4] = {}; //ініціалізація масиву
 
+    // Прив'язка змінних до запиту
     bind[0].buffer_type = MYSQL_TYPE_STRING;
-    bind[0].buffer = const_cast<char*>(name.c_str());
-    bind[0].buffer_length = name.length();
+    bind[0].buffer = const_cast<char*>(name_.c_str());
+    bind[0].buffer_length = name_.length();
 
     bind[1].buffer_type = MYSQL_TYPE_STRING;
-    bind[1].buffer = const_cast<char*>(auth.c_str());
-    bind[1].buffer_length = auth.length();
+    bind[1].buffer = const_cast<char*>(auth_.c_str());
+    bind[1].buffer_length = auth_.length();
 
     bind[2].buffer_type = MYSQL_TYPE_LONG;
-    bind[2].buffer = reinterpret_cast<char*>(&price);
-    bind[2].buffer_length = sizeof(price);
+    bind[2].buffer = reinterpret_cast<char*>(&price_);
+    bind[2].buffer_length = sizeof(price_);
 
     bind[3].buffer_type = MYSQL_TYPE_LONG;
-    bind[3].buffer = reinterpret_cast<char*>(&qty);
-    bind[3].buffer_length = sizeof(qty);
+    bind[3].buffer = reinterpret_cast<char*>(&qty_);
+    bind[3].buffer_length = sizeof(qty_);
 
-    if (mysql_stmt_bind_param(mysqlStmt, bind))
+    // Перевірка прив'язки
+    if (mysql_stmt_bind_param(mysql_stmt, bind))
     {
         cout << "Could not bind parameters\n";
         return;
     }
 
-    if (mysql_stmt_execute(mysqlStmt))
+    // Перевірка, чи виконався запит
+    if (mysql_stmt_execute(mysql_stmt))
     {
-        cout << "Could not execute prepared statement\n" << mysql_stmt_error(mysqlStmt) << "\n";
+        cout << "Could not execute prepared statement\n" << mysql_stmt_error(mysql_stmt) << "\n";
         return;
     }
 
     cout << "Book record inserted successfully\n";
 
-    mysql_stmt_close(mysqlStmt);
+    mysql_stmt_close(mysql_stmt); //закриття стейтменту
 }
 
 /**
- * @brief Updates the price of a book based on the given book ID.
- *
- * This function prompts the user to enter a book ID and fetches the
- * current name and price from the database. It then asks the user
- * whether they want to update the price of the book. If the user
- * confirms, it prompts for a new price and updates the database
- * accordingly. If the user cancels, it does nothing. If the book
- * with the given ID does not exist, it displays a message indicating
- * that no book was found.
- *
- * @param None
+ * @brief Оновлення ціни книги
+ * @details Здійснює пощук книги по ідентфікатору та виконує оновлення ціни в базі даних
  * @return None
  */
 void books::update_price()
 {
     cout << "Enter the id of the book for update in price : ";
-    cin >> id;
+    cin >> id_;
+
+    // Формування запиту
     stmt.str("");
-    stmt << "Select name, price from Books where id = " << id << ";";
+    stmt << "Select name, price from Books where id = " << id_ << ";";
     query = stmt.str();
     q = query.c_str();
 
+    // Виконання запиту та вивід помилки
     if (mysql_query(conn, q))
     {
         cout << "Query Error!" << endl;
         return;
     }
 
-    MYSQL_RES* res_set = mysql_store_result(conn);
+    MYSQL_RES* res_set = mysql_store_result(conn); //збережання результатів запиту
+
+    // Оновлення ціни в БД
     if (MYSQL_ROW row; (row = mysql_fetch_row(res_set)) != nullptr)
     {
         char choice;
+
         cout << "The name of the book is : " << row[0] << endl;
         cout << "The current price of the book is : " << row[1] << endl;
         cout << "Do you want to upgrade the price [y/n] : ";
         cin >> choice;
 
+        // Оновлення ціни при згоді
         if (tolower(choice) == 'y')
         {
             cout << "Enter the new price : ";
-            cin >> price;
+            cin >> price_;
+
+            // Оновлення в БД за заданим іденифікатором
             stmt.str("");
-            stmt << "Update Books set price = " << price << " where id = " << id << ";";
+            stmt << "Update Books set price = " << price_ << " where id = " << id_ << ";";
             query = stmt.str();
             q = query.c_str();
+
+            //Повідомлення про виконання
             if (mysql_query(conn, q))
             {
                 cout << endl << endl << "Query Error!" << endl << "Contact technical team" << endl << endl << endl;
@@ -190,41 +204,31 @@ void books::update_price()
 }
 
 /**
- * @brief Performs a search for a book record in the database.
- *
- * This function prompts the user to enter the book ID and searches for a corresponding record
- * in the "Books" table in the database. If a matching record is found, the details of the book
- * (including the name, author, price, and quantity) are displayed. If no matching record is found,
- * a message indicating "No record found" is displayed.
- *
- * @details This function first prompts the user to enter the book ID using cin. The function then
- * constructs a query string to search for the book record in the "Books" table based on the provided
- * book ID. The query string is executed using the mysql_query() function, and the result set is stored
- * using mysql_store_result(). The function then retrieves the first row of the result set using
- * mysql_fetch_row(). If a row is retrieved (indicating a matching record was found), the details of
- * the book (including the book ID, name, author, price, and quantity) are printed to the console using
- * cout. If no row is retrieved (indicating no matching record was found), a message indicating "No record
- * found" is displayed.
- *
- * @param None
+ * @brief Функція пошуку каниги за іденифікатором
+ * @details Формує запит та виводить дані, якщо книга існує
  * @return None
- **/
+ */
 void books::search()
 {
     cout << "Enter book id for details : ";
-    cin >> id;
+    cin >> id_;
+
+    // Формування запиту
     stmt.str("");
-    stmt << "Select * from Books where id = " << id << ";";
+    stmt << "Select * from Books where id = " << id_ << ";";
     query = stmt.str();
     q = query.c_str();
 
+    // Перевірка на помилки під час виконання запиту
     if (mysql_query(conn, q))
     {
         cout << "Query Error!" << endl;
         return;
     }
 
-    MYSQL_RES* res_set = mysql_store_result(conn);
+    MYSQL_RES* res_set = mysql_store_result(conn); //збереження результату запиту
+
+    // Виведення інформації
     if (MYSQL_ROW row; (row = mysql_fetch_row(res_set)) != nullptr)
     {
         cout << "The Details of Book Id " << row[0] << endl;
@@ -240,74 +244,59 @@ void books::search()
 }
 
 /**
- * @brief Update the quantity of books in the database.
- *
- * This function updates the quantity of books in the "Books" table in the database based on
- * the records in the "Purchases" table where the books have been received but not yet invoiced.
- * It retrieves the book IDs and quantities from the "Purchases" table and uses them to update
- * the corresponding book records in the "Books" table.
- *
- * @details This function first retrieves the book IDs and quantities from the "Purchases" table
- * where the books have been received but not yet invoiced. It executes a SELECT query to fetch the
- * book_id and qty columns from the "Purchases" table using mysql_query() and mysql_store_result()
- * functions. If the query execution or result storing fails, an error message is printed and the
- * function returns.
- *
- * Then, it executes an UPDATE query to set the inv column of the "Purchases" table to 1 for the
- * received but not yet invoiced books. Again, mysql_query() is used to execute the query, and if
- * it fails, an error message is printed and the function returns.
- *
- * Next, it fetches the book_id and qty values from each row of the result set using mysql_fetch_row()
- * function. The book_id and qty values are converted to integer using atoi() function and stored
- * in the b_id[] and qty[] arrays respectively. The arrays are used to update the quantity of
- * corresponding book records in the "Books" table.
- *
- * Finally, an UPDATE query is executed for each book ID and quantity in the b_id[] and qty[] arrays
- * using mysql_query() function. If any of the queries fail, an error message is printed and the
- * function returns. Otherwise, a success message is printed.
- *
- * @param None
+ * @brief Оновлення книг в БД
+ * @details Оновлює статус книг в базі даних знідно з отриманими замовленнями
  * @return None
  */
 void books::update()
 {
     int b_id[100], qty[100], i = 0;
+
+    // Формування запиту
     stmt.str("");
     stmt << "Select book_id,qty from Purchases where received = 'T' and inv IS NULL;";
     query = stmt.str();
     q = query.c_str();
 
+    // Виконання запиту і виведення помилки
     if (mysql_query(conn, q))
     {
         cout << "Failed to execute query: " << mysql_error(conn) << endl;
         return;
     }
 
-    res_set = mysql_store_result(conn);
+    res_set = mysql_store_result(conn); //Отримання результату запиту
+
+    // Перевірка збереження резельтату
     if (res_set == nullptr)
     {
         cout << "Failed to store result: " << mysql_error(conn) << endl;
         return;
     }
 
+    // Оновлення статусу для всіх отиманих покупок
     stmt.str("");
     stmt << "Update Purchases set inv = 1 where received = 'T' and inv IS NULL;";
     query = stmt.str();
     q = query.c_str();
 
+    // Перевірка виканання запиту
     if (mysql_query(conn, q))
     {
         cout << "Failed to execute query: " << mysql_error(conn) << endl;
         return;
     }
 
+    // Перетворення рядка результату в числа
+    char* p_end;
     while ((row = mysql_fetch_row(res_set)) != nullptr)
     {
-        b_id[i] = atoi(row[0]);
-        qty[i] = atoi(row[1]);
+        b_id[i] = strtol(row[0], &p_end, 10);
+        qty[i] = strtol(row[1], &p_end, 10);
         i++;
     }
 
+    // Оновлення кількості книг в БД
     const int max = i;
     for (i = 0; i <= max; i++)
     {
@@ -326,14 +315,22 @@ void books::update()
     cout << "The orders recieved have been updated.";
 }
 
+/**
+* @brief Відображає інформацію про всі книги
+* @details Функція виконує SQL запит до бази даних для отримання усіх записів з таблиці Books. Інформація включає назву книги, автора, ціну та кількість.
+* @return None
+*/
 void books::display()
 {
     int i = 0;
+
+    // Виконання SQL запиту до БД для отримання всіх записів з таблиці "Books"
     query = "Select * from Books;";
     q = query.c_str();
     mysql_query(conn, q);
     res_set = mysql_store_result(conn);
 
+    // Виводить інформацію про кожну книгу з бази даних
     while ((row = mysql_fetch_row(res_set)) != nullptr)
     {
         cout << endl;
@@ -343,26 +340,100 @@ void books::display()
         cout << "Quantity : " << row[4] << endl;
     }
 }
-//class suppliers
 
-//class purchased
+void suppliers::add_sup()
+{
+    // Введення даних про постачальника
+    cout << "Enter the Supplier Name : ";
+    cin >> name_;
+    cout << "Enter Phone no. : ";
+    cin >> phn_;
+    cout << "Enter the address (in 3 lines) : ";
+    cin >> addr_line1_;
+    cin >> addr_line2_;
+    cin >> addr_city_;
+    cout << "Enter State : ";
+    cin >> addr_state_;
 
-//class employees
+    MYSQL_STMT* mysql_stmt = mysql_stmt_init(conn); //ініціалізація оператора MySQL
 
-//class members
+    // Перевірка на дійсність
+    if (!mysql_stmt)
+    {
+        cout << "Could not initialize statement handler\n";
+        return;
+    }
 
-//class sales
+    // Перевірка на готовнісь запиту до виконання
+    if (const auto str =
+            "INSERT INTO Suppliers (name, phn, addr_line1, addr_line2, addr_city, addr_state) VALUES (?, ?, ?, ?, ?, ?)"
+        ;
+        mysql_stmt_prepare(
+            mysql_stmt, str, strlen(str)))
+    {
+        cout << "Could not prepare statement\n" << mysql_stmt_error(mysql_stmt) << "\n";
+        return;
+    }
 
-// FUNCTIONS
+    MYSQL_BIND bind[6] = {}; //ініціалізація масиву
+
+    // Прив'язка змінних до запиту
+    bind[0].buffer_type = MYSQL_TYPE_STRING;
+    bind[0].buffer = const_cast<char*>(name_.c_str());
+    bind[0].buffer_length = name_.length();
+
+    bind[1].buffer_type = MYSQL_TYPE_LONG;
+    bind[1].buffer = reinterpret_cast<char*>(&phn_);
+    bind[1].buffer_length = sizeof(phn_);
+
+    bind[2].buffer_type = MYSQL_TYPE_STRING;
+    bind[2].buffer = const_cast<char*>(addr_line1_.c_str());
+    bind[2].buffer_length = addr_line1_.length();
+
+    bind[3].buffer_type = MYSQL_TYPE_STRING;
+    bind[3].buffer = const_cast<char*>(addr_line2_.c_str());
+    bind[3].buffer_length = addr_line2_.length();
+
+    bind[4].buffer_type = MYSQL_TYPE_STRING;
+    bind[4].buffer = const_cast<char*>(addr_city_.c_str());
+    bind[4].buffer_length = addr_city_.length();
+
+    bind[5].buffer_type = MYSQL_TYPE_STRING;
+    bind[5].buffer = const_cast<char*>(addr_state_.c_str());
+    bind[5].buffer_length = addr_state_.length();
+
+    // Перевірка прив'язки
+    if (mysql_stmt_bind_param(mysql_stmt, bind))
+    {
+        cout << "Could not bind parameters\n";
+        return;
+    }
+
+    // Перевірка, чи виконався запит
+    if (mysql_stmt_execute(mysql_stmt))
+    {
+        cout << "Could not execute prepared statement\n" << mysql_stmt_error(mysql_stmt) << "\n";
+        return;
+    }
+
+    cout << "Suppliers record inserted successfully\n";
+
+    mysql_stmt_close(mysql_stmt); //закриття стейтменту
+}
+
 
 void book_menu();
+void sup_menu();
 
-//main menu
-
-
+/**
+ * @brief Головне меню системи
+ * @details Функція відображує головне меню системи та дозволяє користувачу вибирати різні опції (книги, постачальники, закупівлі, працівники, члени, продажі та вихід).
+ * @return None
+ */
 void main_menu()
 {
     int c;
+
     cout << "*************************************************" << endl;
     cout << "         BOOKSHOP MANAGEMENT SYSTEM" << endl;
     cout << "*************************************************" << endl;
@@ -375,43 +446,53 @@ void main_menu()
     cout << "   7. EXIT" << endl << endl << endl;
     cout << "Enter Your Choice : ";
     cin >> c;
-    switch (c) // NOLINT(*-multiway-paths-covered)
+
+    switch (c)
     {
     case 1:
         system("cls");
         book_menu();
         getch();
         break;
-    // TODO: Add handlers for cases 2 - 6 to call respective menus for SUPPLIERS, PURCHASES, EMPLOYEES, MEMBERS, SALES
-    // TODO: Add handler for case 7 to exit the program
-    // TODO: Add default case to handle invalid inputs
-    default: ;
+    case 2:
+        system("cls");
+        sup_menu();
+        getch();
+        break;
+    case 3:
+        system("cls");
+    //TODO: pur_menu();
+        getch();
+        break;
+    case 4:
+        system("cls");
+    //TODO: emp_menu();
+        getch();
+        break;
+    case 5:
+        system("cls");
+    //TODO: mem_menu();
+        getch();
+        break;
+    case 6:
+        system("cls");
+    //TODO: sal_menu();
+        getch();
+        break;
+    case 7:
+        exit(1);
+    default:
+        system("cls");
+        cout << "Wrong input" << endl;
+        getch();
+        break;
     }
 }
 
-//book menu
-
-
 /**
- * @brief Displays the book menu and performs various actions based on user input.
- *
- * This function displays a menu with different options for managing books. It prompts
- * the user to enter their choice and performs the corresponding action. The available
- * options are:
- *
- *   1. ADD: Invokes the "add" method of the books class to add a new book record to the database.
- *   2. UPDATE PRICE: Invokes the "update_price" method of the books class to update the price of a book.
- *   3. SEARCH: Invokes the "search" method of the books class to search for a book based on user input.
- *   4. UPDATE STATUS: Invokes the "update" static method of the books class to update the status of books.
- *   5. DISPLAY ALL: Invokes the "display" static method of the books class to display all book records.
- *   6. RETURN TO MAIN MENU: Returns to the main menu.
- *
- * @details This function first displays the book menu options using cout. It then prompts the user to enter
- * their choice using cin. Based on the user's choice, it invokes the corresponding method of the books class.
- * If an invalid choice is entered, an error message is displayed.
- *
- * @param None
- * @return None
+ * @brief Відображення меню книжкового складу
+ * @details Функція відображає меню книжкового складу з різними опціями, такими як "Додати", "Оновити ціну", "Пошук", "Оновити статус", "Показати все" та "Повернутися до головного меню". Вона також обробляє вибір користувача та виконує відповідні дії.
+ * @return  None
  */
 void book_menu()
 {
@@ -429,6 +510,7 @@ void book_menu()
     cout << "   6. RETURN TO MAIN MENU" << endl << endl << endl;
     cout << "Enter Your Choice : ";
     cin >> c;
+
     switch (c)
     {
     case 1:
@@ -449,47 +531,75 @@ void book_menu()
     case 6:
         return;
     default:
-        cout << "Wrong Input" << endl << "Invalid Input";
+        cout << "Wrong Input" << endl;
         break;
     }
 }
 
-//sup menu
+/**
+* @brief Меню постачальників
+* @details Функція, що виводить меню дій з постачальниками, зчитує введене користувачем значення та виконує відповідну дію.
+* @return None
+*/
+void sup_menu()
+{
+    int c;
+    suppliers s;
 
-//purchase menu
+    cout << "*************************************************" << endl;
+    cout << "                SUPPLIER MENU" << endl;
+    cout << "*************************************************" << endl;
+    cout << "   1. ADD" << endl;
+    cout << "   2. REMOVE" << endl;
+    cout << "   3. SEARCH" << endl;
+    cout << "   4. RETURN TO MAIN MENU" << endl << endl << endl;
+    cout << "Enter Your Choice : ";
+    cin >> c;
 
-//emp menu
-
-//mem menu
-
-//sal menu
-
-//pass function
+    switch (c)
+    {
+    case 1:
+        s.add_sup();
+        break;
+    case 2:
+        //TODO: s.remove_supplier();
+        break;
+    case 3:
+        //TODO: s.search_id();
+        break;
+    case 4:
+        return;
+    default:
+        cout << "Wrong input" << endl;
+        break;
+    }
+}
 
 /**
- * @brief Prompts the user to enter a password and checks if it is correct.
- *
- * This function prompts the user to enter a 4-digit password and checks if it matches the
- * predefined password constant.
- *
- * @note This function uses getch() and cout from the iostream library, so make sure to include it.
- * @note This function uses the PASSWORD constant, which should be defined beforehand.
+ * @brief Верифікація пароля.
+ * @details Порівнює введений користувачем пароль з встановленим паролем. Вихід з програми, якщо пароль невірний.
+ * @return None
  */
 void pass()
 {
     int num = 0;
     cout << "Enter password :";
+
+    // Отримання та обробка вводу пароля, де кожен символ відображається як "*".
     for (int i = 0; i < 4; i++)
     {
         num = num * 10 + (getch() - 48);
         cout << "*";
     }
+
+    // Якщо введений користувачем пароль відповідає правильному, виводиться повідомлення про успішний вхід
     if (num == PASSWORD)
     {
         cout << endl << endl << "Correct Password" << endl << endl;
         cout << "Press any key...";
         getch();
     }
+    // Блок коду для виходу з програми, якщо введений пароль невірний
     else
     {
         cout << endl << endl << "Incorrect Password" << endl << endl;
@@ -499,25 +609,28 @@ void pass()
     }
 }
 
-// MAIN FUNCTION
-//TODO: Remove the [[noreturn]] attribute from the main function as it is not needed for now.
-//TODO: Add the "int choice;" variable that will be used for handling user's choice.
-//TODO: Add a connection status check after establishing the connection with the database.
-//TODO: Use "NULL" instead of "nullptr" for C++ version compatibility.
-//TODO: Add an error message to be displayed if the connection to the database is not established.
-//TODO: Add a getch() function call after displaying the error message to give user a chance to read the message before the program closes.
-//TODO: Prepare for halting the main loop and properly ending the program.
-//TODO: Add a "return 0;" statement at the end of the main function to signal a successful program execution.
+/**
+ * @brief Вхідна точка програми.
+ * @details Ця функція ініціалізує підключення до бази даних, потім обробляє вибір користувача в головному меню. Якщо підключення до бази даних не вдається, виводить повідомлення про помилку на екран.
+ * @return None
+ */
 [[noreturn]] int main()
 {
     pass();
     conn = mysql_init(nullptr);
     conn = mysql_real_connect(conn, HOST, USER, PASS, DATABASE, PORT, nullptr, 0);
-    while (true)
-    {
-        system("cls");
-        main_menu();
-    }
-}
 
-#pragma clang diagnostic pop
+    if (conn)
+    {
+        while (true)
+        {
+            system("cls");
+            main_menu();
+        }
+    }
+
+    system("cls");
+    cout << "Error while connection to database." << endl << "Contant tech expert." << endl << "romakuriluk@gmail.com";
+
+    return 0;
+}

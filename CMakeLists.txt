@@ -4,7 +4,7 @@ project(Bookshop_Management_System_Using_C_)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-set(CMAKE_CURRENT_SOURCE_DIR "C:/Users/romak/OneDrive/Desktop/Archive/Programming/Bookshop-Management-System-Using-C-")
+set(CMAKE_CURRENT_SOURCE_DIR "C:/Users/romak/Desktop/Archive/Programming/Bookshop-Management-System-Using-C-")
 
 
 include_directories("C:/Program Files/MySQL/MySQL Server 8.0/include")
@@ -29,9 +29,9 @@ set(CPACK_PACKAGE_NAME "Bookshop_Management_System_Using_C_")
 set(CPACK_PACKAGE_VENDOR "Roman Kuryliuk")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
-set(CPACK_PACKAGE_VERSION_MAJOR "1")
-set(CPACK_PACKAGE_VERSION_MINOR "2")
-set(CPACK_PACKAGE_VERSION_PATCH "7")
+set(CPACK_PACKAGE_VERSION_MAJOR "2")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
 
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 
