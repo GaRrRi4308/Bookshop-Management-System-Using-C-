@@ -61,6 +61,7 @@ class suppliers
 
 public:
     void add_sup();
+    void remove_supplier();
 };
 
 /**
@@ -341,6 +342,15 @@ void books::display()
     }
 }
 
+/**
+ * @brief Додає дані про нового постачальника.
+ *
+ * @details Функція зчитує з консолі інформацію про нового постачальника, включаючи ім'я,
+ * номер телефону і адресу. Після цього дані зберігаються в БД MySQL. Функція повідомляє
+ * про успішність/неуспішність виконання.
+ *
+ * @return Нічого не повертає.
+ */
 void suppliers::add_sup()
 {
     // Введення даних про постачальника
@@ -421,6 +431,27 @@ void suppliers::add_sup()
     mysql_stmt_close(mysql_stmt); //закриття стейтменту
 }
 
+/**
+* @brief Вилучає постачальника з бази даних.
+* @details Цей метод дозволяє вилучити постачальника з бази даних, виконавши відповідний SQL-запит до бази даних.
+* @return None
+*/
+void suppliers::remove_supplier()
+{
+    //Запит на введення ідентифікаційного номера постачальника для його видалення
+    cout << "Enter the supplier id to remove the supplier : ";
+    cin >> id_;
+
+    //Виконання запиту на видалення постачальника з бази даних за його ідентифікатором
+    stmt.str("");
+    stmt << "Delete from Suppliers where id = " << id_ << ";";
+    query = stmt.str();
+    q = query.c_str();
+    mysql_query(conn, q);
+
+    cout << "Supplier removed";
+}
+
 
 void book_menu();
 void sup_menu();
@@ -429,6 +460,7 @@ void sup_menu();
  * @brief Головне меню системи
  * @details Функція відображує головне меню системи та дозволяє користувачу вибирати різні опції (книги, постачальники, закупівлі, працівники, члени, продажі та вихід).
  * @return None
+ * @warning Не завершено
  */
 void main_menu()
 {
@@ -540,6 +572,7 @@ void book_menu()
 * @brief Меню постачальників
 * @details Функція, що виводить меню дій з постачальниками, зчитує введене користувачем значення та виконує відповідну дію.
 * @return None
+* @warning Не завершено
 */
 void sup_menu()
 {
@@ -562,7 +595,7 @@ void sup_menu()
         s.add_sup();
         break;
     case 2:
-        //TODO: s.remove_supplier();
+        s.remove_supplier();
         break;
     case 3:
         //TODO: s.search_id();
